@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
-const fs =  require("fs");
+const fs = require("fs");
+const path = require('path')
 const PORT = 3000;
 const initialData = require('./assets/initial-data.json');
 const bodyParser = require('body-parser');
@@ -9,9 +10,16 @@ const data = require('./backend/data.json');
 
 app.use(bodyParser.json());
 app.use(express.json());
-app.get('/', (req, res) => {
+
+
+
+function readFile(req, res) {
     const data = JSON.stringify(initialData);
     fs.writeFileSync('backend/data.json', data);
+}
+
+app.get('/', (req, res) => {
+    res.json(data);
 });
 
 app.get('/users/:handle', (req, res) => {
@@ -26,8 +34,8 @@ app.get('/users/:handle', (req, res) => {
 });
 
 app.get('/tweets', (req, res) => {
-    const sortedTweets = data.tweets.sort((a, b) => b.timestamp - a.timestamp); 
-    res.status(200).json(sortedTweets); 
+    const sortedTweets = data.tweets.sort((a, b) => b.timestamp - a.timestamp);
+    res.status(200).json(sortedTweets);
 });
 
 app.get("/tweets/:handle", (req, res) => {
@@ -41,31 +49,31 @@ app.get("/tweets/:handle", (req, res) => {
 });
 
 //Setting On The Route /tweets/:handle/media returns All tweets Of User Containing Medias Like Images and Videos
-app.get('/tweets/:handle/media', (req ,res) => {
+app.get('/tweets/:handle/media', (req, res) => {
     const getTweets = data.tweets;
     const getUsers = data.users;
     const handle = req.params.handle;
 
     //Find User By His Handle
-        const users = getUsers.find( user => user.handle === handle)
-            if(!users){
-                return res.status(404).json({error: 'User Not Found'})
-            }
+    const users = getUsers.find(user => user.handle === handle)
+    if (!users) {
+        return res.status(404).json({ error: 'User Not Found' })
+    }
     //Filter Tweet And Compare if his author is Equalt With Users Id And Media
-        const tweets = getTweets.filter(tweet => tweet.author === users.id && tweet.media.length > 0 );
-    
+    const tweets = getTweets.filter(tweet => tweet.author === users.id && tweet.media.length > 0);
+
     //Map Tweet To Take Medias Only
-        const getUsersMedia = getTweets.flatMap( tweet => tweet.media )
-            tweets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            if( tweets ) {
-                res.status(200).json({ getUsersMedia });
-            
-            } else {
-                res.status(404).send('Media For This User Is Not Found');
-            }
+    const getUsersMedia = getTweets.flatMap(tweet => tweet.media)
+    tweets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (tweets) {
+        res.status(200).json({ getUsersMedia });
+
+    } else {
+        res.status(404).send('Media For This User Is Not Found');
+    }
 });
 
-app.post('/tweets',(req, res, next) => {
+app.post('/tweets', (req, res, next) => {
     // Error Handling For New Tweet
     // const errors = validationResult(req);
     // if (!errors.isEmpty()) {
